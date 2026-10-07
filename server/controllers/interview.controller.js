@@ -3,6 +3,21 @@ import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import { askAi } from "../services/openRouter.service.js";
 import User from "../models/user.model.js";
 import Interview from "../models/interview.model.js";
+const extractJSON = (text) => {
+  if (!text) return null;
+  const match = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  const target = match ? match[1].trim() : text.trim();
+  try {
+    return JSON.parse(target);
+  } catch (err) {
+    const firstBrace = target.indexOf('{');
+    const lastBrace = target.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      return JSON.parse(target.substring(firstBrace, lastBrace + 1));
+    }
+    throw err;
+  }
+};
 
 export const analyzeResume = async (req, res) => {
   try {
@@ -57,7 +72,7 @@ Return strictly JSON:
 
     const aiResponse = await askAi(messages)
 
-    const parsed = JSON.parse(aiResponse);
+    const parsed = extractJSON(aiResponse);
 
     fs.unlinkSync(filepath)
 
@@ -228,7 +243,13 @@ export const submitAnswer = async (req, res) => {
     const { interviewId, questionIndex, answer, timeTaken } = req.body
 
     const interview = await Interview.findById(interviewId)
+    if (!interview) {
+      return res.status(404).json({ message: "Interview not found." });
+    }
     const question = interview.questions[questionIndex]
+    if (!question) {
+      return res.status(404).json({ message: "Question not found." });
+    }
 
     // If no answer
     if (!answer) {
@@ -315,7 +336,7 @@ Answer: ${answer}
     const aiResponse = await askAi(messages)
 
 
-    const parsed = JSON.parse(aiResponse);
+    const parsed = extractJSON(aiResponse);
 
     question.answer = answer;
     question.confidence = parsed.confidence;
