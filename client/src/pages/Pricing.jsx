@@ -72,6 +72,21 @@ function Pricing() {
         credits: plan.credits,
       },{withCredentials:true})
       
+      const isTestMode = result.data.isMock || !import.meta.env.VITE_RAZORPAY_KEY_ID || import.meta.env.VITE_RAZORPAY_KEY_ID.includes("add your");
+
+      if (isTestMode) {
+        // Direct test verification
+        const verifypay = await axios.post(ServerUrl + "/api/payment/verify", {
+          razorpay_order_id: result.data.id,
+          razorpay_payment_id: `pay_test_${Date.now()}`,
+          razorpay_signature: "mock_signature"
+        }, {withCredentials:true});
+        dispatch(setUserData(verifypay.data.user));
+        alert("Payment Successful 🎉 Credits Added (Test Mode)!");
+        navigate("/");
+        setLoadingPlan(null);
+        return;
+      }
 
       const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID,

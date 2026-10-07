@@ -18,7 +18,7 @@ function AuthModal({ onClose }) {
             <button onClick={onClose} className='absolute top-8 right-5 text-gray-800 hover:text-black text-xl'>
              <FaTimes size={18}/>
             </button>
-            <Auth isModal={true}/>
+            <Auth isModal={true} isModel={true} onClose={onClose}/>
         </div>
     </div>
   )
